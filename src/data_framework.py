@@ -33,7 +33,7 @@ class Particle:
         Returns:
             - X: np.array, shape=(n_events, 51, 51)
             - y: np.array, shape=(n_events, n_pcl, 2)
-            - en: np.array, shape=(n_events, n_pcl, 1)
+            - en: np.array, shape=(n_events, n_pcl)
         '''
         self.path = self.data_path()
 
