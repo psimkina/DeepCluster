@@ -45,6 +45,7 @@ class Particle:
         if len(y.shape) != 3: 
             y = np.expand_dims(y, axis=1)
             en = np.expand_dims(en, axis=1)
+            test
         return X, y, en
     
 class Photon(Particle):
