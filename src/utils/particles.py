@@ -1,32 +1,31 @@
-
 import numpy as np
+from data_preprocessing import apply_noise, get_model_samples
+
 
 class Particle:
-    '''
+    """
     Class for particle data.
-    
-    Args: 
+
+    Args:
         - self.particle_type: int, 0 for photon, 1 for electron, 2 for pion
         - self.n_pcl: int, number of particles in the event
         - self.path: str, path to the data folder
-    '''
+    """
 
     def __init__(self, particle_type) -> None:
         self.particle_type = particle_type
-        
+
     def data_path(self):
-        '''
+        """
         Returns the path to the data folder.
-        '''
-        particle_dict = {0: "photon",
-                         1: "electron",
-                         2: "pion"}
-        
+        """
+        particle_dict = {0: "photon", 1: "electron", 2: "pion"}
+
         path = "../data/" + particle_dict[self.particle_type] + "/"
         return path
-    
-    def load_data(self, type='train'):
-        '''
+
+    def load_data(self, type="train"):
+        """
         Loads the data from the data folder.
         Args:
             - type: str, 'train', 'valid', or 'test'
@@ -34,36 +33,52 @@ class Particle:
             - X: np.array, shape=(n_events, 51, 51)
             - y: np.array, shape=(n_events, n_pcl, 2)
             - en: np.array, shape=(n_events, n_pcl, 1)
-        '''
+        """
         self.path = self.data_path()
 
-        X  = np.load(self.path + "X{}.npy".format(type))
-        y  = np.load(self.path + "y{}.npy".format(type))
+        X = np.load(self.path + "X{}.npy".format(type))
+        y = np.load(self.path + "y{}.npy".format(type))
         en = np.load(self.path + "en{}.npy".format(type))
 
         # change the shape of y and en for consistency
-        if len(y.shape) != 3: 
+        if len(y.shape) != 3:
             y = np.expand_dims(y, axis=1)
             en = np.expand_dims(en, axis=1)
         return X, y, en
-    
+
+    def load_and_prepare_data(self, type='train'):
+        """
+        Loads the data and applies noise.
+        Args:
+            - type: str, 'train', 'valid', or 'test'
+        Returns:
+            - X: np.array, shape=(n_events, 51, 51)
+            - y: np.array, shape=(n_events, n_pcl, 2)
+            - en: np.array, shape=(n_events, n_pcl, 1)
+        """
+        X, y, en = self.load_data(type=type)
+        X = apply_noise(X)
+        model_variables = get_model_samples(X, y, en)
+        return model_variables
+
+
 class Photon(Particle):
-    '''
+    """
     Class for photon data.
-    
-    Args: 
+
+    Args:
         - self.n_pcl: int, number of particles in the event
         - self.path: str, path to the data folder
-    '''
+    """
 
     def __init__(self, n_pcl=1) -> None:
         super().__init__(particle_type=0)
         self.n_pcl = n_pcl
-    
+
     def data_path(self):
-        '''
+        """
         Returns the path to the data folder.
-        '''
+        """
         if self.n_pcl == 1:
             path = "../data/photon/" + "one_particle/"
         else:
