@@ -41,6 +41,10 @@ class Particle:
         y  = np.load(self.path + "y{}.npy".format(type))
         en = np.load(self.path + "en{}.npy".format(type))
 
+        # change the shape of y and en for consistency
+        if len(y.shape) != 3: 
+            y = np.expand_dims(y, axis=1)
+            en = np.expand_dims(en, axis=1)
         return X, y, en
     
 class Photon(Particle):
