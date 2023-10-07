@@ -24,7 +24,7 @@ class Particle:
         path = "../data/" + particle_dict[self.particle_type] + "/"
         return path
 
-    def load_data(self, type="train"):
+    def load_data(self, data_type="train"):
         """
         Loads the data from the data folder.
         Args:
@@ -36,9 +36,9 @@ class Particle:
         """
         self.path = self.data_path()
 
-        X = np.load(self.path + "X{}.npy".format(type))
-        y = np.load(self.path + "y{}.npy".format(type))
-        en = np.load(self.path + "en{}.npy".format(type))
+        X = np.load(self.path + "X{}.npy".format(data_type))
+        y = np.load(self.path + "y{}.npy".format(data_type))
+        en = np.load(self.path + "en{}.npy".format(data_type))
 
         # change the shape of y and en for consistency
         if len(y.shape) != 3:
@@ -46,7 +46,7 @@ class Particle:
             en = np.expand_dims(en, axis=1)
         return X, y, en
 
-    def load_and_prepare_data(self, type='train'):
+    def load_and_prepare_data(self, data_type="train"):
         """
         Loads the data and applies noise.
         Args:
@@ -56,7 +56,7 @@ class Particle:
             - y: np.array, shape=(n_events, n_pcl, 2)
             - en: np.array, shape=(n_events, n_pcl, 1)
         """
-        X, y, en = self.load_data(type=type)
+        X, y, en = self.load_data(data_type=data_type)
         X = apply_noise(X)
         model_variables = get_model_samples(X, y, en)
         return model_variables

@@ -107,7 +107,7 @@ def get_model_samples(X, y, en, crop_size=7, threshold=0.5):
 
         # format the variables
         var = [Xi, indi, is_seedi, yi, eni]
-        for i in range(len(var)):
+        for i, _ in enumerate(var):
             var[i] = format_variable(var[i], pad=35)
 
         is_seedi = np.array(is_seedi).astype(int)
