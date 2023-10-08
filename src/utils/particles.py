@@ -61,6 +61,23 @@ class Particle:
         model_variables = get_model_samples(X, y, en)
         return model_variables
 
+    def data_for_seed_finder(self, data_type="train"):
+        """
+        Loads the data and transforms it for the seed finder network.
+        """
+        model_variables = self.load_and_prepare_data(data_type=data_type)
+        X, _, is_seed, _, _ = model_variables
+
+        # reshape variables for the model
+        X = X.reshape(-1, 7, 7, 1)
+        is_seed = is_seed.reshape(-1)
+
+        # remove non-existant windows (i.e. windows added during padding)
+        X = X[is_seed != -1]
+        is_seed = is_seed[is_seed != -1]
+        print(is_seed.shape, X.shape)
+        return X, is_seed
+
 
 class Photon(Particle):
     """
