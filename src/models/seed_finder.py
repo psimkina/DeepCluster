@@ -1,23 +1,21 @@
-import numpy as np
-from tqdm import tqdm
-
 from tensorflow import keras
 from keras import layers
 
 
 class SeedFinder:
-    '''
+    """
     SeedFinder class for the seed finder network.
-    '''
+    """
+
     def __init__(self, crop_size=7):
         pass
 
     def architecture(self, crop_size=7):
-        '''
+        """
         Function to define the architecture of the seed finder network.
         Args:
             - crop_size: int, size of the crop window
-        '''
+        """
 
         inputs = keras.Input(shape=(crop_size, crop_size, 1))
         x = layers.Conv2D(128, 3, activation=layers.LeakyReLU())(inputs)
