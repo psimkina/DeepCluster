@@ -77,6 +77,13 @@ class Particle:
         is_seed = is_seed[is_seed != -1]
         print(is_seed.shape, X.shape)
         return X, is_seed
+    
+    def data_for_center_finder(self, data_type="train"):
+        """
+        Loads the data and transforms it for the center finder network.
+        """
+        model_variables = self.load_and_prepare_data(data_type=data_type)
+        #return X, (y, en, is_seed)
 
 
 class Photon(Particle):
