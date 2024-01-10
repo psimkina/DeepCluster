@@ -2,3 +2,5 @@ data
 test.py
 __pycache__
 Dockerfile
+notebooks/models/
+.vscode/

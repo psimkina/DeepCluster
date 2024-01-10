@@ -1,5 +1,6 @@
 import numpy as np
 from data_preprocessing import apply_noise, get_model_samples
+from seed_finder import SeedFinder
 
 
 class Particle:
@@ -75,7 +76,7 @@ class Particle:
         # remove non-existant windows (i.e. windows added during padding)
         X = X[is_seed != -1]
         is_seed = is_seed[is_seed != -1]
-        print(is_seed.shape, X.shape)
+
         return X, is_seed
     
     def data_for_center_finder(self, data_type="train"):
@@ -83,7 +84,12 @@ class Particle:
         Loads the data and transforms it for the center finder network.
         """
         model_variables = self.load_and_prepare_data(data_type=data_type)
-        #return X, (y, en, is_seed)
+        X, indices, is_seed, y, en = model_variables # samples are combined by event with padding 35
+
+        # make seed finder predictions
+        ypr = SeedFinder().prediction(X)
+        print("resulting shapes: ", X.shape, ypr.shape)
+
 
 
 class Photon(Particle):
