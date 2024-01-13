@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
+import tensorflow_addons as tfa
 
 
 class GraphLayer(layers.Layer):
@@ -210,3 +211,26 @@ class CenterFinder(tf.keras.Model):
             "energy": xen_out,
             "seed": xs_out
         }
+
+def masked_loss(y_true, y_pred): 
+    '''
+    Masked loss functions to not include non-existent clusters in the final loss.
+    '''  
+    mask = y_true[:,:,0] != -1
+    mask = tf.cast(mask, tf.float32)
+
+    loss = tf.keras.losses.mae(y_true, y_pred)
+    loss = loss*mask
+    return tf.math.reduce_sum(loss, axis=1)/tf.math.reduce_sum(mask, axis=1)
+    
+def masked_loss_seed(y_true, y_pred): 
+        '''
+        Masked loss function for the seed prediction.
+        '''
+        mask = y_true[:,:,0] != -1
+        mask = tf.cast(mask, tf.float32)
+
+        FL = tfa.losses.SigmoidFocalCrossEntropy(alpha=0.25, gamma=2)
+        loss = mask * FL(y_true, y_pred)
+
+        return tf.math.reduce_sum(loss, axis=1)/tf.math.reduce_sum(mask, axis=1)
