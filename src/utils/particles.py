@@ -101,21 +101,25 @@ class Particle:
 
         # shuffle events as now they are ordered by the probability predicted by the first network
         for i in range(len(X)):
-            X[i], y[i], en[i], indices[i], is_seed[i], ypr[i] = shuffle(X[i], y[i], en[i], 
-                                                                        indices[i], is_seed[i], 
-                                                                        ypr[i])  
-    
+            var[0][i], var[1][i], var[2][i], var[3][i], var[4][i], var[5][i] = shuffle(var[0][i], var[1][i], 
+                                                                                       var[2][i], var[3][i], 
+                                                                                       var[4][i], var[5][i])
         # create a mask for the true coordinates and energy
-        mask = y[:,:, 0] > 0
+        mask = var[3][:,:, 0] > 0
         # change the coordinate position, so it is relative to the center of the 7x7 image
-        y[mask] = y[mask] - indices[mask].astype(float) + 3. - 3.5
+        var[3][mask] = var[3][mask] - var[1][mask].astype(float) + 3. - 3.5
         # normalize the energy
-        en[mask] = en[mask]/np.max(en[mask])
-        print("X shape: ", X.shape, var[0].shape)
-        # get adjacency matrix
-        adj_matrix, adj_coef = get_adj_matrix(X, indices, n=n)
+        var[4][mask] = var[4][mask]/np.max(var[4][mask])
 
-        return (X, adj_matrix, adj_coef), {'center':y, 'energy': en, 'seed': is_seed} 
+        # get adjacency matrix
+        adj_matrix, adj_coef = get_adj_matrix(var[0], var[1], n=n)
+
+        # reshape variables for the model
+        var[0] = np.swapaxes(var[0], 1, 3)
+        var[4] = np.expand_dims(var[4], axis=2)
+        var[2] = np.expand_dims(var[2], axis=2)
+
+        return (var[0], adj_matrix, adj_coef), {'center':var[3], 'energy': var[4], 'seed': var[2]} 
 
 
 class Photon(Particle):
