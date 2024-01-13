@@ -1,5 +1,6 @@
 import numpy as np
-from data_preprocessing import apply_noise, get_model_samples, mask_variable
+from sklearn.utils import shuffle
+from data_preprocessing import apply_noise, get_model_samples, mask_variable, get_adj_matrix
 from seed_finder import SeedFinder
 
 
@@ -96,9 +97,25 @@ class Particle:
 
         var = [X, indices, is_seed, y, en, ypr]
         for i, _ in enumerate(var):
-            var[i] = mask_variable(var[i], ypr, threshold=threshold, n=n)      
-        return var
+            var[i] = mask_variable(var[i], ypr, threshold=threshold, n=n)    
 
+        # shuffle events as now they are ordered by the probability predicted by the first network
+        for i in range(len(X)):
+            X[i], y[i], en[i], indices[i], is_seed[i], ypr[i] = shuffle(X[i], y[i], en[i], 
+                                                                        indices[i], is_seed[i], 
+                                                                        ypr[i])  
+    
+        # create a mask for the true coordinates and energy
+        mask = y[:,:, 0] > 0
+        # change the coordinate position, so it is relative to the center of the 7x7 image
+        y[mask] = y[mask] - indices[mask].astype(float) + 3. - 3.5
+        # normalize the energy
+        en[mask] = en[mask]/np.max(en[mask])
+        print("X shape: ", X.shape, var[0].shape)
+        # get adjacency matrix
+        adj_matrix, adj_coef = get_adj_matrix(X, indices, n=n)
+
+        return (X, adj_matrix, adj_coef), {'center':y, 'energy': en, 'seed': is_seed} 
 
 
 class Photon(Particle):

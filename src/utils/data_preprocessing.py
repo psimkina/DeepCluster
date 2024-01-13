@@ -155,3 +155,41 @@ def mask_variable(var, ypr, threshold, n=4):
     
     return var 
 
+def get_adj_matrix(X, indices, n=4): 
+    '''
+    Create required adjecency matrices.
+    '''
+    adj = np.full((X.shape[0], n, n), 0.)
+    adj_cof = np.full((X.shape[0], n, n), 0.)
+    
+    for i in tqdm(range(X.shape[0])): 
+        x = indices[i][:,0]
+        y = indices[i][:,1]
+
+        # create adjecency matrix based on Euclidean distance
+        dx = np.expand_dims(x, axis=1) - np.expand_dims(x, axis=0)
+        dy = np.expand_dims(y, axis=1) - np.expand_dims(y, axis=0)
+        dr = np.sqrt(dx**2 + dy**2)
+
+        # eliminate connections that are further away than 3 crystals
+        dr[dr > 3] = 0.
+
+        # rescale the matrix to 3 and take the inverse
+        dr /= 3
+        dr[dr!=0] = 1 - dr[dr!=0]
+
+        # add a self-loop
+        dr += np.eye(n)
+
+        adj_cof[i][0] = dr[0,[0,1,2,3]]
+        adj_cof[i][1] = dr[1,[1,0,2,3]]
+        adj_cof[i][2] = dr[2,[2,0,1,3]]
+        adj_cof[i][3] = dr[3,[3,0,1,2]]
+
+        # add an anti self-loop
+        dr -= 2*np.eye(n)
+
+        adj[i] = dr
+        
+    return adj, adj_cof
+
