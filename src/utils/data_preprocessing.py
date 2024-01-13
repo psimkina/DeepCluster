@@ -108,7 +108,7 @@ def get_model_samples(X, y, en, crop_size=7, threshold=0.5):
         # format the variables
         var = [Xi, indi, is_seedi, yi, eni]
         for i, _ in enumerate(var):
-            var[i] = format_variable(var[i], pad=35)
+            var[i] = pad_variable(var[i], pad=35)
 
         is_seedi = np.array(is_seedi).astype(int)
 
@@ -121,9 +121,9 @@ def get_model_samples(X, y, en, crop_size=7, threshold=0.5):
     return final_var
 
 
-def format_variable(var, pad=35):
+def pad_variable(var, pad=35):
     """
-    Function to format the variables for the model.
+    Function to pad the variables for the model.
     """
     var = np.array(var)
     var = np.pad(
@@ -133,3 +133,25 @@ def format_variable(var, pad=35):
     )
 
     return var
+
+def mask_variable(var, ypr, threshold, n=4):
+    """
+    Mask and cut variables to prepare them for the center finder model.
+    Args: 
+        - var: np.array, variable to process
+        - ypr: np.array, seed finder predictions
+        - n: the number of input windows to center finder model
+    """
+    # create a dummy array not to change values of ypr
+    ypr_cut = np.zeros_like(ypr)
+    # sort the variables based on the seed finder probability
+    for i in range(len(var)):
+        var[i] = var[i][np.argsort(-ypr[i, :, 0])]
+        ypr_cut[i] = ypr[i][np.argsort(-ypr[i, :, 0])]
+    # cut the padded values, so that the model learns only on the true existing clusters
+    var, ypr_cut = var[:, :n], np.squeeze(ypr_cut[:, :n], axis=2)
+    # mask the events that did not path the threshold from the first model
+    var[ypr_cut < threshold] = -1.
+    
+    return var 
+

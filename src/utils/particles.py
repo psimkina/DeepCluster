@@ -1,5 +1,5 @@
 import numpy as np
-from data_preprocessing import apply_noise, get_model_samples
+from data_preprocessing import apply_noise, get_model_samples, mask_variable
 from seed_finder import SeedFinder
 
 
@@ -79,16 +79,25 @@ class Particle:
 
         return X, is_seed
     
-    def data_for_center_finder(self, data_type="train"):
+    def data_for_center_finder(self, data_type="train", threshold=0.3, n=4, **kwargs):
         """
         Loads the data and transforms it for the center finder network.
+        Args:
+            - threshold: float, threshold for the seed finder network
+            - data_type: str, 'train', 'valid', or 'test'
+            - n: int, number of input windows to the network
+            - **kwargs: keyword arguments for the seed finder network paths
         """
         model_variables = self.load_and_prepare_data(data_type=data_type)
         X, indices, is_seed, y, en = model_variables # samples are combined by event with padding 35
 
         # make seed finder predictions
-        ypr = SeedFinder().prediction(X)
-        print("resulting shapes: ", X.shape, ypr.shape)
+        ypr = SeedFinder().prediction(X, **kwargs)
+
+        var = [X, indices, is_seed, y, en, ypr]
+        for i, _ in enumerate(var):
+            var[i] = mask_variable(var[i], ypr, threshold=threshold, n=n)      
+        return var
 
 
 

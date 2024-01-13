@@ -31,7 +31,7 @@ class SeedFinder:
 
         return model
     
-    def prediction(self, X_crop, model_path=None, weight_path=None): 
+    def prediction(self, X_crop, **kwargs): 
         """
         Returns the prediction of the seed finder network.
         Args:
@@ -39,6 +39,9 @@ class SeedFinder:
             - model_path: str, path to the model
             - weight_path: str, path to the weights
         """
+        model_path = kwargs.get("model_path", None)
+        weight_path = kwargs.get("weight_path", None)
+        
         if model_path is None:
             model = self.architecture()
         else:
