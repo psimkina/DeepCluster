@@ -100,7 +100,7 @@ class Particle:
             var[i] = mask_variable(var[i], ypr, threshold=threshold, n=n)    
 
         # shuffle events as now they are ordered by the probability predicted by the first network
-        for i in range(len(X)):
+        for i, _ in enumerate(X):
             var[0][i], var[1][i], var[2][i], var[3][i], var[4][i], var[5][i] = shuffle(var[0][i], var[1][i], 
                                                                                        var[2][i], var[3][i], 
                                                                                        var[4][i], var[5][i])
@@ -110,6 +110,11 @@ class Particle:
         var[3][mask] = var[3][mask] - var[1][mask].astype(float) + 3. - 3.5
         # normalize the energy
         var[4][mask] = var[4][mask]/np.max(var[4][mask])
+
+        # delete the events where no clusters were chosen or no clusters exist after selection
+        condition = ((np.sum(var[3][:,:,0], axis=1) != 0.) & (np.sum(var[2] != -1, axis=1) != 0))
+        for i, _ in enumerate(var):
+            var[i] = var[i][condition]
 
         # get adjacency matrix
         adj_matrix, adj_coef = get_adj_matrix(var[0], var[1], n=n)
