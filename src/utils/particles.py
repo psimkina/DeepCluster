@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.utils import shuffle
 from data_preprocessing import apply_noise, get_model_samples, mask_variable, get_adj_matrix
 from seed_finder import SeedFinder
+from center_finder import CenterFinder
 
 
 class Particle:
@@ -125,8 +126,48 @@ class Particle:
         var[2] = np.expand_dims(var[2], axis=2)
 
         return (var[0], adj_matrix, adj_coef), {'center':var[3], 'energy': var[4], 'seed': var[2]} 
+    
+    def analysis(self, data_type="test", threshold=0.3, n=4, **kwargs):
+        """
+        Performs the full analysis of the data, from loading to the final predictions.
+        Args:
+            - threshold: float, threshold for the seed finder network
+            - data_type: str, 'train', 'valid', or 'test'
+            - n: int, number of input windows to the network
+            - **kwargs: keyword arguments for the seed and center finder network paths
+        """
+        # load the data
+        model_variables = self.load_and_prepare_data(data_type=data_type)
+        X, indices, is_seed, y, en = model_variables # samples are combined by event with padding 35
 
+        # make seed finder predictions
+        seed_pr = SeedFinder().prediction(X, **kwargs)
 
+        var = [X, indices, is_seed, y, en, seed_pr]
+        for i, _ in enumerate(var):
+            var[i] = mask_variable(var[i], seed_pr, threshold=threshold, n=n)
+
+        # delete the events where no clusters were chosen or no clusters exist after selection
+        condition = ((np.sum(var[3][:,:,0], axis=1) != 0.) & (np.sum(var[2] != -1, axis=1) != 0))
+        for i, _ in enumerate(var):
+            var[i] = var[i][condition]
+
+        # get adjacency matrix
+        adj_matrix, adj_coef = get_adj_matrix(var[0], var[1], n=n)
+
+        # reshape variables for the model
+        var[0] = np.swapaxes(var[0], 1, 3) 
+
+        # get the predictions from the center finder network
+        center_pr = CenterFinder({}).prediction(var[0], adj_matrix, adj_coef, **kwargs)
+
+        yc, en, ys = center_pr['center'], center_pr['energy'], center_pr['seed']
+
+        # change back the coordinate position and energy
+        yc = yc + 3.5 + var[1] - 7//2
+        en *= 100
+        return yc, en, ys, seed_pr, var[3], var[4]
+    
 class Photon(Particle):
     """
     Class for photon data.

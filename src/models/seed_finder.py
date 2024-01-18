@@ -39,8 +39,8 @@ class SeedFinder:
             - model_path: str, path to the model
             - weight_path: str, path to the weights
         """
-        model_path = kwargs.get("model_path", None)
-        weight_path = kwargs.get("weight_path", None)
+        model_path = kwargs.get("model_seed", None)
+        weight_path = kwargs.get("weight_seed", None)
         
         if model_path is None:
             model = self.architecture()

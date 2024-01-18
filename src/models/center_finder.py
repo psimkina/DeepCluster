@@ -158,12 +158,13 @@ class CenterFinder(tf.keras.Model):
     """
     def __init__(self, args):
         super().__init__()
-        self.n = args["n"]
-
-        # add all the network blocks
-        self.conv_clusters = ConvBlock(args)
-        self.dense_clusters = DenseBlock(args)
-        self.graph = GraphLayer()
+        self.n = args.get("n", None)
+        
+        if self.n is not None:
+            # add all the network blocks
+            self.conv_clusters = ConvBlock(args)
+            self.dense_clusters = DenseBlock(args)
+            self.graph = GraphLayer()
 
     def call(self, x):
         inputs, adj_matrix, adj_coef = x
@@ -211,6 +212,23 @@ class CenterFinder(tf.keras.Model):
             "energy": xen_out,
             "seed": xs_out
         }
+    
+    def prediction(self, X, adj_matrix, adj_coef, **kwargs):
+        """
+        Make predictions on the input data.
+        """
+        model_path = kwargs.get("model_center", None)
+        weight_path = kwargs.get("weight_center", None)
+        
+        if model_path is None:
+            model = self.architecture()
+        else:
+            model = keras.models.load_model(model_path, custom_objects={'masked_loss': masked_loss,
+                                                                        'masked_loss_seed': masked_loss_seed}, 
+                                                                        compile=False)
+        if weight_path is not None:
+            model.load_weights(weight_path)
+        return model.predict([X, adj_matrix, adj_coef])
 
 def masked_loss(y_true, y_pred): 
     '''
