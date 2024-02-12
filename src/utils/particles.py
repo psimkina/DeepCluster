@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.utils import shuffle
 from data_preprocessing import apply_noise, get_model_samples, mask_variable, get_adj_matrix
+from analysis import create_dataframe
 from seed_finder import SeedFinder
 from center_finder import CenterFinder
 
@@ -62,13 +63,13 @@ class Particle:
         X, y, en = self.load_data(data_type=data_type)
         X = apply_noise(X)
         model_variables = get_model_samples(X, y, en)
-        return model_variables
+        return model_variables, (X, y, en)
 
     def data_for_seed_finder(self, data_type="train"):
         """
         Loads the data and transforms it for the seed finder network.
         """
-        model_variables = self.load_and_prepare_data(data_type=data_type)
+        model_variables, _ = self.load_and_prepare_data(data_type=data_type)
         X, _, is_seed, _, _ = model_variables
 
         # reshape variables for the model
@@ -90,7 +91,7 @@ class Particle:
             - n: int, number of input windows to the network
             - **kwargs: keyword arguments for the seed finder network paths
         """
-        model_variables = self.load_and_prepare_data(data_type=data_type)
+        model_variables, _ = self.load_and_prepare_data(data_type=data_type)
         X, indices, is_seed, y, en = model_variables # samples are combined by event with padding 35
 
         # make seed finder predictions
@@ -127,7 +128,7 @@ class Particle:
 
         return (var[0], adj_matrix, adj_coef), {'center':var[3], 'energy': var[4], 'seed': var[2]} 
     
-    def analysis(self, data_type="test", threshold=0.3, n=4, **kwargs):
+    def prediction(self, data_type="test", threshold=0.3, n=4, **kwargs):
         """
         Performs the full analysis of the data, from loading to the final predictions.
         Args:
@@ -137,7 +138,7 @@ class Particle:
             - **kwargs: keyword arguments for the seed and center finder network paths
         """
         # load the data
-        model_variables = self.load_and_prepare_data(data_type=data_type)
+        model_variables, initial_variables = self.load_and_prepare_data(data_type=data_type)
         X, indices, is_seed, y, en = model_variables # samples are combined by event with padding 35
 
         # make seed finder predictions
@@ -166,7 +167,22 @@ class Particle:
         # change back the coordinate position and energy
         yc = yc + 3.5 + var[1] - 7//2
         en *= 100
-        return yc, en, ys, seed_pr, var[3], var[4]
+        return (yc, en, ys, seed_pr), initial_variables
+    
+    def analysis(self, data_type="test", threshold=0.3, n=4, out_path='data', **kwargs):
+        """
+        Performs the full analysis of the data, from loading to combining the final predictions in the dataframe.
+        Args:
+            - threshold: float, threshold for the seed finder network
+            - data_type: str, 'train', 'valid', or 'test'
+            - n: int, number of input windows to the network
+            - **kwargs: keyword arguments for the seed and center finder network paths
+        """
+
+        # get the model predictions
+        pred, true = self.prediction(data_type=data_type, threshold=threshold, n=n, **kwargs)
+        df_true = create_dataframe(pred, true)
+        return df_true
     
 class Photon(Particle):
     """
